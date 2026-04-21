@@ -4,34 +4,23 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// Handles the Game Over popup shown at the end of a match.
-/// Subscribes to GameManager events to appear/disappear automatically.
-/// Exposes Retry and Exit button handlers.
+/// Popup shown at the end of a match.
+/// Displays result text, match duration, and Retry/Exit buttons.
+/// Subscribes to GameManager events to auto-open on game end.
 /// </summary>
-public class GameOverPopup : MonoBehaviour
+public class GameOverPopup : PopupBase
 {
-    // The dim overlay behind the popup. Toggled with the popup.
-    [SerializeField] private GameObject dimBackground;
-
-    // The popup visual panel. Toggled with the dim overlay.
-    [SerializeField] private GameObject popupPanel;
-
-    // UI elements to populate with result data.
     [SerializeField] private TextMeshProUGUI resultText;
     [SerializeField] private TextMeshProUGUI durationText;
-
-    // Buttons to wire up.
     [SerializeField] private Button retryButton;
     [SerializeField] private Button exitButton;
-
-    // The name of the scene to load when the Exit button is pressed.
     [SerializeField] private string playSceneName = "PlayScene";
 
     private GameManager gameManager;
 
-    private void Awake()
+    protected override void Awake()
     {
-        SetVisible(false);
+        base.Awake(); // important: lets PopupBase hide the content
     }
 
     private void Start()
@@ -46,14 +35,8 @@ public class GameOverPopup : MonoBehaviour
         gameManager.OnGameEnded += HandleGameEnded;
         gameManager.OnGameStarted += HandleGameStarted;
 
-        if (retryButton != null)
-        {
-            retryButton.onClick.AddListener(OnRetryClicked);
-        }
-        if (exitButton != null)
-        {
-            exitButton.onClick.AddListener(OnExitClicked);
-        }
+        if (retryButton != null) retryButton.onClick.AddListener(OnRetryClicked);
+        if (exitButton != null) exitButton.onClick.AddListener(OnExitClicked);
     }
 
     private void OnDestroy()
@@ -65,10 +48,7 @@ public class GameOverPopup : MonoBehaviour
         }
     }
 
-    private void HandleGameStarted()
-    {
-        SetVisible(false);
-    }
+    private void HandleGameStarted() => Close();
 
     private void HandleGameEnded(GameManager.GameResult result, int[] winningLine)
     {
@@ -85,25 +65,15 @@ public class GameOverPopup : MonoBehaviour
 
         if (durationText != null)
         {
-            durationText.text = "Time: 00:00";
+            durationText.text = "Time: 00:00"; // real timer comes later
         }
 
-        SetVisible(true);
-    }
-
-    // Toggles both the dim background and the popup panel together.
-    private void SetVisible(bool visible)
-    {
-        if (dimBackground != null) dimBackground.SetActive(visible);
-        if (popupPanel != null) popupPanel.SetActive(visible);
+        Open();
     }
 
     private void OnRetryClicked()
     {
-        if (gameManager != null)
-        {
-            gameManager.StartNewGame();
-        }
+        if (gameManager != null) gameManager.StartNewGame();
     }
 
     private void OnExitClicked()
