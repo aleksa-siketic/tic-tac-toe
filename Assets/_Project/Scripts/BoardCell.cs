@@ -19,44 +19,49 @@ public class BoardCell : MonoBehaviour
     [SerializeField] private Sprite xSprite;
     [SerializeField] private Sprite oSprite;
 
-    // Cached reference to the GameManager; found at startup.
     private GameManager gameManager;
 
     private void Start()
     {
-        // Find the GameManager in the scene. FindFirstObjectByType is the
-        // modern replacement for the deprecated FindObjectOfType.
         gameManager = FindAnyObjectByType<GameManager>();
 
-        // Hook up our click handler to the Button component.
         Button button = GetComponent<Button>();
         button.onClick.AddListener(OnCellClicked);
 
-        // Start with the mark invisible.
-        if (markImage != null)
+        // Subscribe to game start events so we can reset our visual.
+        if (gameManager != null)
         {
-            markImage.gameObject.SetActive(false);
+            gameManager.OnGameStarted += ResetVisual;
+        }
+
+        // Start with the mark invisible.
+        ResetVisual();
+    }
+
+    private void OnDestroy()
+    {
+        // Always unsubscribe to prevent errors when the scene unloads.
+        if (gameManager != null)
+        {
+            gameManager.OnGameStarted -= ResetVisual;
         }
     }
 
     private void OnCellClicked()
     {
-        // Ask the GameManager to place a mark. If it returns false,
-        // the move was invalid (cell taken or game over) - do nothing.
         bool placed = gameManager.PlaceMark(cellIndex);
         if (!placed)
         {
             return;
         }
 
-        // Move was accepted. Reveal the appropriate sprite.
         GameManager.CellState state = gameManager.GetCellState(cellIndex);
         UpdateVisual(state);
     }
 
     /// <summary>
     /// Shows the correct sprite based on the cell's state.
-    /// Called after a successful placement; can also be called to reset.
+    /// Called after a successful placement.
     /// </summary>
     public void UpdateVisual(GameManager.CellState state)
     {
@@ -68,5 +73,16 @@ public class BoardCell : MonoBehaviour
 
         markImage.sprite = (state == GameManager.CellState.X) ? xSprite : oSprite;
         markImage.gameObject.SetActive(true);
+    }
+
+    /// <summary>
+    /// Hides the mark. Called when a new game starts.
+    /// </summary>
+    private void ResetVisual()
+    {
+        if (markImage != null)
+        {
+            markImage.gameObject.SetActive(false);
+        }
     }
 }
