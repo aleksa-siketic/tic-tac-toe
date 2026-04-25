@@ -3862,7 +3862,7 @@ GameObject:
   - component: {fileID: 1162764901}
   - component: {fileID: 1162764902}
   m_Layer: 0
-  m_Name: _Managers
+  m_Name: _PersistentManagers
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

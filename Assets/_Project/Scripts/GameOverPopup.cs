@@ -63,9 +63,9 @@ public class GameOverPopup : PopupBase
             };
         }
 
-        if (durationText != null)
+        if (durationText != null && gameManager != null)
         {
-            durationText.text = "Time: 00:00"; // real timer comes later
+            durationText.text = $"Time: {FormatDuration(gameManager.LastMatchDuration)}";
         }
 
         Open();
@@ -79,5 +79,12 @@ public class GameOverPopup : PopupBase
     private void OnExitClicked()
     {
         SceneManager.LoadScene(playSceneName);
+    }
+    private string FormatDuration(float seconds)
+    {
+        int total = Mathf.FloorToInt(seconds);
+        int minutes = total / 60;
+        int secs = total % 60;
+        return $"{minutes:00}:{secs:00}";
     }
 }
