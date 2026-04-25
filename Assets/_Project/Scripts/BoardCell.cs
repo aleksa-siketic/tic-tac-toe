@@ -4,6 +4,7 @@ using UnityEngine.UI;
 /// <summary>
 /// Represents a single cell on the Tic-Tac-Toe board.
 /// Handles click input and updates its visual mark (X or O).
+/// Reads sprites from the active theme via ThemeManager.
 /// Does NOT contain game logic - delegates to GameManager.
 /// </summary>
 [RequireComponent(typeof(Button))]
@@ -15,10 +16,6 @@ public class BoardCell : MonoBehaviour
     // The child Image that displays the X or O sprite. Set in the Inspector.
     [SerializeField] private Image markImage;
 
-    // The sprites to show for each player's mark. Set in the Inspector.
-    [SerializeField] private Sprite xSprite;
-    [SerializeField] private Sprite oSprite;
-
     private GameManager gameManager;
 
     private void Start()
@@ -28,32 +25,35 @@ public class BoardCell : MonoBehaviour
         Button button = GetComponent<Button>();
         button.onClick.AddListener(OnCellClicked);
 
-        // Subscribe to game start events so we can reset our visual.
         if (gameManager != null)
         {
             gameManager.OnGameStarted += ResetVisual;
         }
 
-        // Start with the mark invisible.
+        if (ThemeManager.Instance != null)
+        {
+            ThemeManager.Instance.OnThemeChanged += OnThemeChanged;
+        }
+
         ResetVisual();
     }
 
     private void OnDestroy()
     {
-        // Always unsubscribe to prevent errors when the scene unloads.
         if (gameManager != null)
         {
             gameManager.OnGameStarted -= ResetVisual;
+        }
+        if (ThemeManager.Instance != null)
+        {
+            ThemeManager.Instance.OnThemeChanged -= OnThemeChanged;
         }
     }
 
     private void OnCellClicked()
     {
         bool placed = gameManager.PlaceMark(cellIndex);
-        if (!placed)
-        {
-            return;
-        }
+        if (!placed) return;
 
         GameManager.CellState state = gameManager.GetCellState(cellIndex);
         UpdateVisual(state);
@@ -71,7 +71,16 @@ public class BoardCell : MonoBehaviour
             return;
         }
 
-        markImage.sprite = (state == GameManager.CellState.X) ? xSprite : oSprite;
+        Sprite sprite = GetSpriteForState(state);
+        if (sprite == null)
+        {
+            // No theme available; leave the mark hidden rather than show nothing.
+            Debug.LogWarning($"BoardCell: no sprite available for {state}. Is ThemeManager present in the scene?");
+            markImage.gameObject.SetActive(false);
+            return;
+        }
+
+        markImage.sprite = sprite;
         markImage.gameObject.SetActive(true);
     }
 
@@ -84,5 +93,25 @@ public class BoardCell : MonoBehaviour
         {
             markImage.gameObject.SetActive(false);
         }
+    }
+
+    /// <summary>
+    /// Called when the user picks a different theme.
+    /// Re-renders the current cell so the new theme's sprite shows.
+    /// </summary>
+    private void OnThemeChanged(ThemeManager.Theme _)
+    {
+        if (gameManager == null) return;
+        UpdateVisual(gameManager.GetCellState(cellIndex));
+    }
+
+    private Sprite GetSpriteForState(GameManager.CellState state)
+    {
+        if (ThemeManager.Instance == null) return null;
+
+        ThemeManager.Theme theme = ThemeManager.Instance.CurrentTheme;
+        if (theme == null) return null;
+
+        return state == GameManager.CellState.X ? theme.xSprite : theme.oSprite;
     }
 }

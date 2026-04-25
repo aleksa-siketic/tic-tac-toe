@@ -4618,7 +4618,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ThemePopup
   content: {fileID: 10869261}
-  themeToggles: []
+  themeToggles:
+  - {fileID: 677765335}
+  - {fileID: 1984589113}
+  - {fileID: 1704731055}
   startButton: {fileID: 1246848336}
   closeButton: {fileID: 178907385}
   gameSceneName: GameScene
