@@ -4,7 +4,9 @@ A polished Tic-Tac-Toe game built in Unity 6. Two-player local pass-and-play wit
 
 ## Play
 
-[Play in browser](TODO) — itch.io WebGL build
+[Play in browser](https://aleksa-siketic.github.io/tic-tac-toe/)
+
+> Note: Background music starts after the first user interaction due to browser autoplay policies. This is standard behavior for web games.
 
 ## Features
 
@@ -39,7 +41,7 @@ Singletons are split by lifetime:
 - **Scene-scoped** (live only in `GameScene`):
   - `GameManager` — board state, turn logic, win detection, match events
 
-This separation keeps data layer (settings, stats, themes) decoupled from gameplay state. The persistent managers are configured once in `PlayScene` and survive scene transitions; `GameManager` is freshly created each time `GameScene` loads.
+This separation keeps the data layer (settings, stats, themes) decoupled from gameplay state. The persistent managers are configured once in `PlayScene` and survive scene transitions; `GameManager` is freshly created each time `GameScene` loads.
 
 ### Event-driven UI
 
@@ -52,6 +54,7 @@ All popups inherit from a `PopupBase` abstract class that handles:
 - Show/hide via a `Content` GameObject toggle
 - Optional open delay (used to space audio cues, and to show the winning strike before the game-over popup)
 - Pop sound on open
+- Scale-in animation with subtle overshoot
 - `OnOpened` / `OnClosed` virtual hooks for subclasses
 
 ### Theme system
@@ -62,33 +65,9 @@ Themes are configured as a serialized array on `ThemeManager`. Each theme refere
 
 A custom `OrientationManager` script attached to each Canvas dynamically adjusts the `CanvasScaler`'s match value based on aspect ratio. In portrait it matches by width; in landscape it matches by height. This keeps UI sized appropriately to whichever screen dimension is more constrained.
 
-## Project Structure
+### Win celebration
 
-Assets/_Project/
-Scenes/
-PlayScene.unity
-GameScene.unity
-Scripts/
-GameManager.cs           Game logic and events
-BoardCell.cs             Cell click handling and visual state
-StrikeLine.cs            Winning line indicator
-PopupBase.cs             Abstract base for all popups
-GameOverPopup.cs
-SettingsPopup.cs
-StatsPopup.cs
-ThemePopup.cs
-ExitConfirmPopup.cs
-SettingsManager.cs       Persistent: music/SFX toggles
-StatsManager.cs          Persistent: match statistics
-ThemeManager.cs          Persistent: theme selection
-AudioManager.cs          Persistent: BGM and SFX playback
-PlaySceneUI.cs           Main menu wiring
-GameSceneUI.cs           HUD wiring
-ButtonClickSound.cs      Helper: plays click sound on Button.onClick
-OrientationManager.cs    Helper: adjusts CanvasScaler for orientation
-TimeFormatter.cs         Static utility: formats seconds as MM:SS
-Sprites/                   Theme sprites, popup background, button sprites
-Audio/                     Music and SFX clips
+When a game ends in a win, the strike line animates drawing across the winning cells, followed by a particle burst once the strike completes. The game-over popup then appears after a short delay so the player has time to see what happened.
 
 ## Tech Stack
 
@@ -106,3 +85,7 @@ To produce a WebGL build:
 1. Open `File → Build Profiles`
 2. Select the Web profile (Mobile / Release)
 3. Click `Build` and choose an output folder
+
+## Credits
+
+UI sprites and audio assets provided as part of the project brief.
