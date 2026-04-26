@@ -12,6 +12,7 @@ public class StrikeLine : MonoBehaviour
     [SerializeField] private float straightLength = 900f;
     [SerializeField] private float diagonalLength = 1270f;
     [SerializeField] private float rowOffset = 290f;
+    [SerializeField] private RectTransform boardRect;
 
     private RectTransform lineRect;
     private Image image;
@@ -64,15 +65,18 @@ public class StrikeLine : MonoBehaviour
         }
 
         (Vector2 position, float angle, float length) = GetStrikeConfig(winningLine);
-
-        lineRect.anchoredPosition = position;
+        Vector2 boardOffset = boardRect != null ? boardRect.anchoredPosition : Vector2.zero;
+        lineRect.anchoredPosition = position + boardOffset;
         lineRect.localRotation = Quaternion.Euler(0f, 0f, angle);
         lineRect.sizeDelta = new Vector2(length, lineRect.sizeDelta.y);
 
         image.enabled = true;
-        Debug.Log($"StrikeLine: drew line [{string.Join(",", winningLine)}] at pos {position}, angle {angle}, length {length}");
-    }
 
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayStrike();
+        }
+    }
     private (Vector2 position, float angle, float length) GetStrikeConfig(int[] line)
     {
         // Rows

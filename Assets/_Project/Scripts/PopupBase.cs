@@ -1,58 +1,92 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
 /// Base class for all popups in the game.
-/// Handles the shared open/close logic and toggles the visible content.
-/// Specific popups inherit from this and add their own content logic.
+/// Handles show/hide logic via a Content child GameObject and
+/// supports an optional open delay (e.g. so a click sound plays before
+/// the popup pop sound, or so the winning strike is visible before the
+/// game-over popup appears).
 /// </summary>
 public abstract class PopupBase : MonoBehaviour
 {
-    // The container holding the popup visuals (dim + panel).
-    // Assign the GameObject that should be shown/hidden.
     [SerializeField] protected GameObject content;
 
-    // Tracks whether the popup is currently open.
+    [Tooltip("Seconds to wait before the popup actually appears. " +
+             "Useful to let a preceding sound finish or to let the player " +
+             "see what just happened before the popup shows.")]
+    [SerializeField] protected float openDelay = 0f;
+
     public bool IsOpen { get; private set; }
+
+    private Coroutine openRoutine;
 
     protected virtual void Awake()
     {
-        // Start hidden. Derived classes can override if they need to
-        // run setup, but must call base.Awake() first.
         if (content != null)
         {
             content.SetActive(false);
         }
-        IsOpen = false;
     }
 
-    /// <summary>
-    /// Opens the popup. Override OnOpened to add content-specific logic.
-    /// </summary>
     public virtual void Open()
+    {
+        if (IsOpen) return;
+        IsOpen = true;
+
+        if (openDelay > 0f)
+        {
+            openRoutine = StartCoroutine(OpenAfterDelay());
+        }
+        else
+        {
+            ActivateAndAnnounce();
+        }
+    }
+
+    public virtual void Close()
+    {
+        // If the popup was queued to open but hasn't yet, cancel the queue.
+        if (openRoutine != null)
+        {
+            StopCoroutine(openRoutine);
+            openRoutine = null;
+        }
+
+        if (content != null)
+        {
+            content.SetActive(false);
+        }
+
+        if (IsOpen)
+        {
+            IsOpen = false;
+            OnClosed();
+        }
+    }
+
+    private IEnumerator OpenAfterDelay()
+    {
+        yield return new WaitForSeconds(openDelay);
+        openRoutine = null;
+        ActivateAndAnnounce();
+    }
+
+    private void ActivateAndAnnounce()
     {
         if (content != null)
         {
             content.SetActive(true);
         }
-        IsOpen = true;
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayPopup();
+        }
+
         OnOpened();
     }
 
-    /// <summary>
-    /// Closes the popup. Override OnClosed to add content-specific logic.
-    /// </summary>
-    public virtual void Close()
-    {
-        if (content != null)
-        {
-            content.SetActive(false);
-        }
-        IsOpen = false;
-        OnClosed();
-    }
-
-    // Hooks for derived classes to react to open/close events.
-    // Default implementations are empty.
     protected virtual void OnOpened() { }
     protected virtual void OnClosed() { }
 }

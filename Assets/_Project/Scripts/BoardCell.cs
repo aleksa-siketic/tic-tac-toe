@@ -50,14 +50,19 @@ public class BoardCell : MonoBehaviour
         }
     }
 
-    private void OnCellClicked()
-    {
-        bool placed = gameManager.PlaceMark(cellIndex);
-        if (!placed) return;
+private void OnCellClicked()
+{
+    bool placed = gameManager.PlaceMark(cellIndex);
+    if (!placed) return;
 
-        GameManager.CellState state = gameManager.GetCellState(cellIndex);
-        UpdateVisual(state);
+    GameManager.CellState state = gameManager.GetCellState(cellIndex);
+    UpdateVisual(state);
+
+    if (AudioManager.Instance != null)
+    {
+        AudioManager.Instance.PlayPlacement();
     }
+}
 
     /// <summary>
     /// Shows the correct sprite based on the cell's state.
