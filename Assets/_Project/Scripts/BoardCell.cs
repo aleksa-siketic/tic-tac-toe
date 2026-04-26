@@ -16,18 +16,14 @@ public class BoardCell : MonoBehaviour
     // The child Image that displays the X or O sprite. Set in the Inspector.
     [SerializeField] private Image markImage;
 
-    private GameManager gameManager;
-
     private void Start()
     {
-        gameManager = FindAnyObjectByType<GameManager>();
-
         Button button = GetComponent<Button>();
         button.onClick.AddListener(OnCellClicked);
 
-        if (gameManager != null)
+        if (GameManager.Instance != null)
         {
-            gameManager.OnGameStarted += ResetVisual;
+            GameManager.Instance.OnGameStarted += ResetVisual;
         }
 
         if (ThemeManager.Instance != null)
@@ -40,9 +36,9 @@ public class BoardCell : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (gameManager != null)
+        if (GameManager.Instance != null)
         {
-            gameManager.OnGameStarted -= ResetVisual;
+            GameManager.Instance.OnGameStarted -= ResetVisual;
         }
         if (ThemeManager.Instance != null)
         {
@@ -50,19 +46,21 @@ public class BoardCell : MonoBehaviour
         }
     }
 
-private void OnCellClicked()
-{
-    bool placed = gameManager.PlaceMark(cellIndex);
-    if (!placed) return;
-
-    GameManager.CellState state = gameManager.GetCellState(cellIndex);
-    UpdateVisual(state);
-
-    if (AudioManager.Instance != null)
+    private void OnCellClicked()
     {
-        AudioManager.Instance.PlayPlacement();
+        if (GameManager.Instance == null) return;
+
+        bool placed = GameManager.Instance.PlaceMark(cellIndex);
+        if (!placed) return;
+
+        GameManager.CellState state = GameManager.Instance.GetCellState(cellIndex);
+        UpdateVisual(state);
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayPlacement();
+        }
     }
-}
 
     /// <summary>
     /// Shows the correct sprite based on the cell's state.
@@ -106,8 +104,8 @@ private void OnCellClicked()
     /// </summary>
     private void OnThemeChanged(ThemeManager.Theme _)
     {
-        if (gameManager == null) return;
-        UpdateVisual(gameManager.GetCellState(cellIndex));
+        if (GameManager.Instance == null) return;
+        UpdateVisual(GameManager.Instance.GetCellState(cellIndex));
     }
 
     private Sprite GetSpriteForState(GameManager.CellState state)

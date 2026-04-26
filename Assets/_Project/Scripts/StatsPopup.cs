@@ -55,15 +55,7 @@ public class StatsPopup : PopupBase
         if (player1WinsText != null) player1WinsText.text = $"Player 1 wins: {s.Player1Wins}";
         if (player2WinsText != null) player2WinsText.text = $"Player 2 wins: {s.Player2Wins}";
         if (drawsText != null) drawsText.text = $"Draws: {s.Draws}";
-        if (avgDurationText != null) avgDurationText.text = $"Avg duration: {FormatDuration(s.AverageDurationSeconds)}";
-    }
-
-    private string FormatDuration(float seconds)
-    {
-        int totalSeconds = Mathf.FloorToInt(seconds);
-        int minutes = totalSeconds / 60;
-        int secs = totalSeconds % 60;
-        return $"{minutes:00}:{secs:00}";
+        if (avgDurationText != null) avgDurationText.text = $"Avg duration: {TimeFormatter.Format(s.AverageDurationSeconds)}";
     }
 
     private void OnResetClicked()

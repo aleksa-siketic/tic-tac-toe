@@ -19,19 +19,16 @@ public class GameSceneUI : MonoBehaviour
     [Header("Popups")]
     [SerializeField] private SettingsPopup settingsPopup;
 
-    private GameManager gameManager;
-
     private void Start()
     {
-        gameManager = FindAnyObjectByType<GameManager>();
-        if (gameManager == null)
+        if (GameManager.Instance == null)
         {
-            Debug.LogError("GameSceneUI: no GameManager found.");
+            Debug.LogError("GameSceneUI: GameManager.Instance is null.");
             return;
         }
 
-        gameManager.OnMarkPlaced += OnMarkPlaced;
-        gameManager.OnGameStarted += OnGameStarted;
+        GameManager.Instance.OnMarkPlaced += OnMarkPlaced;
+        GameManager.Instance.OnGameStarted += OnGameStarted;
 
         if (settingsButton != null)
         {
@@ -44,18 +41,18 @@ public class GameSceneUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (gameManager != null)
+        if (GameManager.Instance != null)
         {
-            gameManager.OnMarkPlaced -= OnMarkPlaced;
-            gameManager.OnGameStarted -= OnGameStarted;
+            GameManager.Instance.OnMarkPlaced -= OnMarkPlaced;
+            GameManager.Instance.OnGameStarted -= OnGameStarted;
         }
     }
 
     private void Update()
     {
         // Tick the timer every frame while the game is in progress.
-        if (gameManager == null || timerText == null) return;
-        timerText.text = $"Time: {FormatDuration(gameManager.CurrentMatchDuration)}";
+        if (GameManager.Instance == null || timerText == null) return;
+        timerText.text = $"Time: {TimeFormatter.Format(GameManager.Instance.CurrentMatchDuration)}";
     }
 
     private void OnGameStarted()
@@ -70,17 +67,9 @@ public class GameSceneUI : MonoBehaviour
 
     private void UpdateMoveTexts()
     {
-        if (gameManager == null) return;
-        if (player1MovesText != null) player1MovesText.text = $"P1: {gameManager.Player1Moves} moves";
-        if (player2MovesText != null) player2MovesText.text = $"P2: {gameManager.Player2Moves} moves";
-    }
-
-    private string FormatDuration(float seconds)
-    {
-        int total = Mathf.FloorToInt(seconds);
-        int minutes = total / 60;
-        int secs = total % 60;
-        return $"{minutes:00}:{secs:00}";
+        if (GameManager.Instance == null) return;
+        if (player1MovesText != null) player1MovesText.text = $"P1: {GameManager.Instance.Player1Moves} moves";
+        if (player2MovesText != null) player2MovesText.text = $"P2: {GameManager.Instance.Player2Moves} moves";
     }
 
     private void OnSettingsClicked()

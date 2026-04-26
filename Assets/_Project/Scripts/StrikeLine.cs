@@ -1,9 +1,11 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
 /// Draws the strike line through the three winning cells when the game ends with a win.
 /// Subscribes to GameManager events to show/hide itself automatically.
+/// Animates the line drawing in over a short duration for a satisfying win moment.
 /// </summary>
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
@@ -14,14 +16,15 @@ public class StrikeLine : MonoBehaviour
     [SerializeField] private float rowOffset = 290f;
     [SerializeField] private RectTransform boardRect;
 
+    [Tooltip("How long the line takes to draw in.")]
+    [SerializeField] private float animationDuration = 0.3f;
+
     private RectTransform lineRect;
     private Image image;
-    private GameManager gameManager;
+    private Coroutine drawRoutine;
 
     private void Awake()
     {
-        // Awake runs even if the GameObject starts disabled, as long as the script is enabled.
-        // We grab component references here.
         lineRect = GetComponent<RectTransform>();
         image = GetComponent<Image>();
 
@@ -31,28 +34,32 @@ public class StrikeLine : MonoBehaviour
 
     private void Start()
     {
-        gameManager = FindAnyObjectByType<GameManager>();
-        if (gameManager == null)
+        if (GameManager.Instance == null)
         {
-            Debug.LogError("StrikeLine: no GameManager found in scene.");
+            Debug.LogError("StrikeLine: GameManager.Instance is null.");
             return;
         }
 
-        gameManager.OnGameEnded += HandleGameEnded;
-        gameManager.OnGameStarted += HandleGameStarted;
+        GameManager.Instance.OnGameEnded += HandleGameEnded;
+        GameManager.Instance.OnGameStarted += HandleGameStarted;
     }
 
     private void OnDestroy()
     {
-        if (gameManager != null)
+        if (GameManager.Instance != null)
         {
-            gameManager.OnGameEnded -= HandleGameEnded;
-            gameManager.OnGameStarted -= HandleGameStarted;
+            GameManager.Instance.OnGameEnded -= HandleGameEnded;
+            GameManager.Instance.OnGameStarted -= HandleGameStarted;
         }
     }
 
     private void HandleGameStarted()
     {
+        if (drawRoutine != null)
+        {
+            StopCoroutine(drawRoutine);
+            drawRoutine = null;
+        }
         image.enabled = false;
     }
 
@@ -68,15 +75,45 @@ public class StrikeLine : MonoBehaviour
         Vector2 boardOffset = boardRect != null ? boardRect.anchoredPosition : Vector2.zero;
         lineRect.anchoredPosition = position + boardOffset;
         lineRect.localRotation = Quaternion.Euler(0f, 0f, angle);
-        lineRect.sizeDelta = new Vector2(length, lineRect.sizeDelta.y);
 
-        image.enabled = true;
+        if (drawRoutine != null)
+        {
+            StopCoroutine(drawRoutine);
+        }
+        drawRoutine = StartCoroutine(AnimateDraw(length));
 
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlayStrike();
         }
     }
+
+    private IEnumerator AnimateDraw(float targetLength)
+    {
+        image.enabled = true;
+        float currentHeight = lineRect.sizeDelta.y;
+
+        if (animationDuration <= 0f)
+        {
+            lineRect.sizeDelta = new Vector2(targetLength, currentHeight);
+            drawRoutine = null;
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < animationDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, elapsed / animationDuration);
+            float width = Mathf.Lerp(0f, targetLength, t);
+            lineRect.sizeDelta = new Vector2(width, currentHeight);
+            yield return null;
+        }
+
+        lineRect.sizeDelta = new Vector2(targetLength, currentHeight);
+        drawRoutine = null;
+    }
+
     private (Vector2 position, float angle, float length) GetStrikeConfig(int[] line)
     {
         // Rows

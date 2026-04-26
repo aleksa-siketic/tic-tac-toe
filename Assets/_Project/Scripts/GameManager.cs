@@ -6,9 +6,12 @@ using UnityEngine;
 /// Owns the board state, whose turn it is, and the rules.
 /// Does NOT handle visuals, sound, or UI - those are separate concerns.
 /// Broadcasts events so other scripts can react without being called directly.
+/// Scene-scoped singleton: lives only in GameScene, not persistent across scenes.
 /// </summary>
 public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance { get; private set; }
+
     public enum CellState { Empty, X, O }
     public enum Player { Player1, Player2 }
     public enum GameResult { Player1Wins, Player2Wins, Draw }
@@ -39,6 +42,24 @@ public class GameManager : MonoBehaviour
     public event Action<int, CellState> OnMarkPlaced;
     public event Action<GameResult, int[]> OnGameEnded;
     public event Action OnGameStarted;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
 
     private void Start()
     {

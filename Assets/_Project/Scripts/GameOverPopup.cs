@@ -16,8 +16,6 @@ public class GameOverPopup : PopupBase
     [SerializeField] private Button exitButton;
     [SerializeField] private string playSceneName = "PlayScene";
 
-    private GameManager gameManager;
-
     protected override void Awake()
     {
         base.Awake(); // important: lets PopupBase hide the content
@@ -25,15 +23,14 @@ public class GameOverPopup : PopupBase
 
     private void Start()
     {
-        gameManager = FindAnyObjectByType<GameManager>();
-        if (gameManager == null)
+        if (GameManager.Instance == null)
         {
-            Debug.LogError("GameOverPopup: no GameManager found in scene.");
+            Debug.LogError("GameOverPopup: GameManager.Instance is null.");
             return;
         }
 
-        gameManager.OnGameEnded += HandleGameEnded;
-        gameManager.OnGameStarted += HandleGameStarted;
+        GameManager.Instance.OnGameEnded += HandleGameEnded;
+        GameManager.Instance.OnGameStarted += HandleGameStarted;
 
         if (retryButton != null) retryButton.onClick.AddListener(OnRetryClicked);
         if (exitButton != null) exitButton.onClick.AddListener(OnExitClicked);
@@ -41,10 +38,10 @@ public class GameOverPopup : PopupBase
 
     private void OnDestroy()
     {
-        if (gameManager != null)
+        if (GameManager.Instance != null)
         {
-            gameManager.OnGameEnded -= HandleGameEnded;
-            gameManager.OnGameStarted -= HandleGameStarted;
+            GameManager.Instance.OnGameEnded -= HandleGameEnded;
+            GameManager.Instance.OnGameStarted -= HandleGameStarted;
         }
     }
 
@@ -63,9 +60,9 @@ public class GameOverPopup : PopupBase
             };
         }
 
-        if (durationText != null && gameManager != null)
+        if (durationText != null && GameManager.Instance != null)
         {
-            durationText.text = $"Time: {FormatDuration(gameManager.LastMatchDuration)}";
+            durationText.text = $"Time: {TimeFormatter.Format(GameManager.Instance.LastMatchDuration)}";
         }
 
         Open();
@@ -73,18 +70,11 @@ public class GameOverPopup : PopupBase
 
     private void OnRetryClicked()
     {
-        if (gameManager != null) gameManager.StartNewGame();
+        if (GameManager.Instance != null) GameManager.Instance.StartNewGame();
     }
 
     private void OnExitClicked()
     {
         SceneManager.LoadScene(playSceneName);
-    }
-    private string FormatDuration(float seconds)
-    {
-        int total = Mathf.FloorToInt(seconds);
-        int minutes = total / 60;
-        int secs = total % 60;
-        return $"{minutes:00}:{secs:00}";
     }
 }
